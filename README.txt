@@ -1,0 +1,112 @@
+﻿SYSUPD.R4X
+==========
+
+SYSUPD.R4X ist der Systemdatei-Updater-Einstieg fuer R4OS.
+
+Seit 0.60.20 liegen die grossen Paket- und Journalobjekte aller vier
+Kommandos (`VERIFY`, `STAGE`, `COMMIT`, `RESUME-BATCH`, `RESUME`, `STATUS`)
+in einem wiederverwendeten,
+modulstatischen Workspace. Die bis zu 32 Payloads mit vier 1024-Byte-
+Pfadfeldern erzeugen dadurch keine mehr als 130 KB grossen lokalen
+Stackframes oder Rueckgabekopien mehr. Das ist insbesondere fuer wiederholte
+SSH-Exec-Probes wichtig, deren 64-KB-Initialstack nicht mehr nur fuer eine
+Statusabfrage wachsen und anschliessend asynchron abgebaut werden muss.
+
+Aktueller Stand seit R4OS 0.63.13:
+
+- Die Implementierung liegt als typisierte gemeinsame Engine unter
+  `Code/System/SDK/r4os/system_update_engine.zig`. `SYSUPD.R4X` ist nur noch
+  das Terminal-Frontend; direkte Engine-Aufrufer erhalten strukturierte
+  Operationen, Zustaende und Ergebnisse und muessen keine Konsolenausgabe
+  auswerten.
+- Seit 0.63.27 wiederholt die Engine transiente Paketmetadaten- und
+  Exact-Read-Fehler begrenzt dreimal; seit 0.63.29 gilt das auch fuer einen
+  scheinbaren `not found`-Lookup. Seit 0.63.30 wird auch der
+  identitaetsgebundene Abort eines fehlgeschlagenen privaten Stage-Streams
+  begrenzt wiederholt und danach ein fehlender oder vollstaendig passender
+  Stage bewiesen. Ein eigener Teil-Stage kann dadurch nicht mehr im naechsten
+  Streamversuch als fremder `stage-conflict` erscheinen. Fremde Inhalte,
+  Format- und Checksumfehler werden weiterhin nie blind geloescht oder
+  wiederholt.
+
+- `SYSUPD VERIFY <paket.R4U>` akzeptiert ausschliesslich R4U2, prueft Header,
+  Manifest, begrenzte UTF-8-Anzeigetexte, Manifest-/Payload-/Paketchecksumme,
+  Zielpfade, konkrete Komponentenanforderungen und ABI-/Versionsmetadaten in
+  einem kontrollierten Payload-Stream.
+- Release-, Paket- und Komponentenversionen sind getrennt. SYSUPD liest
+  R4M0- beziehungsweise Kernel-ELF-Metadaten direkt aus jedem angebotenen
+  Artefakt und weist manipulierte Manifestidentitaeten ab.
+- Aktivierung (`live|restart`) und Prioritaet (`normal|foundation`) werden aus
+  den Komponenten hergeleitet. Kernel und R4L erzwingen Foundation und
+  Neustart; bei gemischten Paketen gilt die strengste Klasse.
+- `SYSUPD STAGE <paket.R4U>` ist der normale Einstieg. Nur reine, aktuell
+  nicht laufende R4X-Anwendungen ohne ausstehende Neustartabhaengigkeit werden
+  live installiert. Service-, Kernel-, R4L-, R4D-, R4P- und abhaengige Pakete
+  werden in `SYSBCH0.JRN`/`SYSBCH1.JRN` fuer den Neustart gebunden.
+- `SYSUPD APPLY <paket.R4U>` ist der direkte Livepfad und weist alles ausser
+  einem solchen reinen R4X-Paket ab. Er nutzt denselben Stream fuer Paket-, Payload- und
+  Eintrag-Checksummen und schreibt Stage-Dateien dabei direkt mit. Grosse
+  Bereiche werden nicht mehr fuer separate Payload-/Package-Checksummen oder
+  sofortige Stage-Re-Reads erneut gelesen.
+- `APPLY` schreibt generationsgebundene FAT-8.3-Stages neben ihre Zielpfade,
+  schreibt abwechselnd `SYSUPD0.JRN` und `SYSUPD1.JRN` und ersetzt Ziele
+  ueber den R4SYS-Systemdatei-Replace-Vertrag.
+- `VERIFY`/`APPLY` melden `streamed=<bytes>`. `APPLY` meldet zusaetzlich
+  `SYSUPD APPLY progress: streamed_bytes=... total=...` fuer grosse Pakete
+  und `staged=<bytes>` fuer tatsaechlich neu geschriebene Stage-Bytes.
+- `SYSUPD RESUME` nimmt den zuletzt gejournalten Paketpfad wieder auf, wenn
+  ein Apply-Lauf abgebrochen wurde und das Paket noch in der Inbox liegt.
+  Eine bereits erreichte Inventarphase kann allein aus Journal, installierten
+  Artefakten und internem Inventarpayload abgeschlossen werden.
+- `SYSUPD COMMIT` verifiziert alle gebundenen Pakete vor dem Update-Lock,
+  ordnet konkrete Abhaengigkeiten topologisch und bevorzugt Foundation nur
+  zwischen gleichzeitig installierbaren Paketen. Danach werden alle
+  Paketpayloads und das abgeleitete `MODULES.JSON` als eine gemeinsame
+  Transaktion committed und das System neu gestartet.
+- Boot-Recovery setzt einen vollstaendig gestagten Batch ausschliesslich aus
+  dessen Journal vorwaerts fort. Ein nachweisbarer Konflikt rollt den ganzen
+  Batch in umgekehrter Reihenfolge zurueck. `SYSUPD RESUME-BATCH` prueft nach
+  dem Boot laufenden Kernel, Artefakte und Inventar; erst dann wird
+  `VERSION.R4S` atomar auf den Zielrelease gesetzt und der Batch auf
+  `Installed` abgeschlossen.
+- `SYSUPD STATUS` zeigt den letzten Journalzustand inklusive Paketversion,
+  Quell-/Zielrelease, Komponentenbindung, angewendeter Payloads und
+  Neustartbedarf.
+- Ein nach erfolgreicher Post-Boot-Pruefung nur noch auf `applied`
+  verbliebener Batch kann mit `RESUME-BATCH` denselben identitaetsgebundenen
+  Cleanup wie die fruehe Boot-Recovery wiederholen und danach `Installed`
+  veroeffentlichen; dafuer ist kein weiterer Neustart erforderlich.
+- Uploads kommen ueber SSH/SFTP/SCP nach `C:\R4OS\UPDATE\INBOX`.
+- Staging-/Journaldateien liegen unter `C:\R4OS\UPDATE\STAGED`; atomare
+  Replace-Stages liegen wegen der FAT32-Rename-Grenze direkt neben dem Ziel.
+- Cleanup und Rollback loeschen Stage-, vorherige Backup- und neu angelegte
+  Zieldateien ueber `fileDeleteIfMatch`. R4SYS haelt dabei dasselbe
+  Filesystem-Gate von der Groessen-/FNV-1a-Pruefung ueber die
+  filesystemeigene Identitaetspruefung bis zur dauerhaften Loeschung. Ein
+  konkurrierender Replace zwischen Hash und Delete kann deshalb keinen neuen
+  Namensbeleger mehr loeschen; fremder Inhalt liefert sichtbar `conflict`.
+  Beim Rollback eines urspruenglich fehlenden NTFS-Ziels werden auch die
+  alias-first Halbzustandsbilder `target=io` sowie
+  `target=not-found, stage=io` zuerst durch den statusbehafteten
+  Replace-Backend replayt; erst danach darf Compare-and-delete das gebundene
+  neue Ziel entfernen.
+  Dasselbe gilt beim Ruecktausch eines vorhandenen Ziels fuer mehrdeutige
+  Target-/Backup-/Stage-Lookups: Der Backend-Zustandsautomat entscheidet
+  zuerst ueber die gemeinsamen NTFS-Identitaeten. Danach muessen das
+  gespeicherte alte Groessen-/Checksum-Paar am Ziel, ein fehlender Backupname
+  und ein passender oder bereits entfernter neuer Stageinhalt bewiesen sein.
+- Kernel-Updates ersetzen `/boot/r4os.elf`, sichern den vorherigen Kernel als
+  `/boot/r4os-prev.elf` und nutzen den vorbereiteten Limine-Rollbackeintrag.
+- Nach dem verifizierten Artefaktcommit liest die Engine Name, Art und Version
+  erneut aus den tatsaechlich installierten R4M0- beziehungsweise
+  Kernel-ELF-Metadaten. Sie aktualisiert `MODULES.JSON` als internen letzten
+  Transaktionsschritt, erhaelt das vorhandene Imageprofil unveraendert und
+  uebernimmt auch bei Downgrades die exakte Artefaktversion. Kein Frontend
+  und kein Dienst schreibt das Inventar selbst.
+- Das duale Journal `R4U_JOURNAL=5` bindet Manifestchecksumme,
+  Komponentendigest, konkrete Komponenten, Paketversion, Foundationklasse,
+  Paketpayloadzahl und die durable `inventory`-Phase. Historische v2-/v3-
+  Batchmarker und Post-Boot-Phase. Historische v2-/v3-/v4-Journale bleiben
+  fuer laufende Recoveryfaelle lesbar.
+- `VERSION.R4S` und `MODULES.JSON` sind keine erlaubten Paketpayloads; ein
+  Teilpaket kann daher keinen vollstaendigen Release vortaeuschen.
