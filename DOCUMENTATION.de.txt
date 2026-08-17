@@ -101,8 +101,10 @@ Aktueller Stand seit R4OS 0.63.13:
   erneut aus den tatsaechlich installierten R4M0- beziehungsweise
   Kernel-ELF-Metadaten. Sie aktualisiert `MODULES.JSON` als internen letzten
   Transaktionsschritt, erhaelt das vorhandene Imageprofil unveraendert und
-  uebernimmt auch bei Downgrades die exakte Artefaktversion. Kein Frontend
-  und kein Dienst schreibt das Inventar selbst.
+  uebernimmt auch bei Downgrades die exakte Artefaktversion. Schema-2/3-
+  Inventare werden dabei nach Schema 4 migriert; vorhandene Subsystemrolle,
+  Anzeigename und Gastformatdaten bleiben bei einem normalen Paketupdate
+  erhalten. Kein Frontend und kein Dienst schreibt das Inventar selbst.
 - Das duale Journal `R4U_JOURNAL=5` bindet Manifestchecksumme,
   Komponentendigest, konkrete Komponenten, Paketversion, Foundationklasse,
   Paketpayloadzahl und die durable `inventory`-Phase. Historische v2-/v3-
