@@ -4,7 +4,7 @@
 
 ## Package
 
-- Version: `0.1.10`
+- Version: `0.1.15`
 - Image target: `/R4OS/SOFTWARE/TERMINAL/SYSUPD.R4X`
 - Image scope: `slim`
 - Canonical project manifest: `module.R4MF`
@@ -28,6 +28,12 @@ last verified standalone dependency identities; workspace builds use the
 mapped local checkouts.
 
 ## Documentation
+
+Live apply verifies payloads while staging. Restart commit verifies all
+private stages before replacing active files. Terminal output includes the
+actual payload stream attempts and bytes read, including retries. Metadata
+reads use bounded blocks; recovery and source-binding checks remain shared
+with the service engine.
 
 Detailed German technical notes from the migration are preserved in
 `DOCUMENTATION.de.txt`. Source-transfer provenance is recorded in
