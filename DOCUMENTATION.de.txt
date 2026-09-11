@@ -3,6 +3,25 @@
 
 SYSUPD.R4X ist der Systemdatei-Updater-Einstieg fuer R4OS.
 
+Seit Modul 0.1.16 kann SYSUPD ARCHIVE-BOOT-BACKUP Bxxxxxxx.R4U einen nicht
+mehr referenzierten Bootbackup nach C:\R4OS\UPDATE\ARCHIVE verschieben.
+Zulaessig ist nur ein Name aus B, sieben Hexziffern und .R4U. Beide vorhandenen
+Journal-Slots muessen lesbar sein und duerfen den Kandidaten in keinem
+Quell-, Ziel-, Stage- oder Backuppfad binden. Ebenso werden Bootkonfiguration
+und gleichartige FAT-Clusteridentitaeten im Bootverzeichnis ausgeschlossen.
+Der gesamte Vorgang haelt die Update-Leihe. Nach dauerhafter Kopie folgen
+vollstaendige Inhaltsvergleiche und eine erneute Referenzpruefung; erst dann
+entfernt fileDeleteIfMatch den alten Namen. Fremde Archivdateien bleiben
+erhalten. Ein Fehler vor dem Entfernen belaesst das Original. Journal und
+Backupinhalt bleiben erhalten; dies ist keine allgemeine FAT-Reparatur.
+
+Auf OssiPC wurde damit ein aelterer 29.418.864-Byte-Backup archiviert, als
+alle 16 Eintraege des ersten Bootverzeichnisclusters belegt waren. Der
+atomare Kerneltausch benoetigte einen weiteren Eintrag. Unabhaengiger
+SHA-256-Vergleich bestaetigte die Archivkopie, das Journal blieb unveraendert,
+und der gebundene Batch konnte danach fortgesetzt werden. Die fehlende
+FAT-Verzeichniserweiterung ist eine separate Kernelkorrektur.
+
 Seit 0.60.20 liegen die grossen Paket- und Journalobjekte aller vier
 Kommandos (`VERIFY`, `STAGE`, `COMMIT`, `RESUME-BATCH`, `RESUME`, `STATUS`)
 in einem wiederverwendeten,
@@ -15,7 +34,7 @@ Statusabfrage wachsen und anschliessend asynchron abgebaut werden muss.
 Aktueller Stand seit R4OS 0.63.13:
 
 - Die Implementierung liegt als typisierte gemeinsame Engine unter
-  `Code/System/SDK/r4os/system_update_engine.zig`. `SYSUPD.R4X` ist nur noch
+  `Repositories/SDK/r4os/system_update_engine.zig`. `SYSUPD.R4X` ist nur noch
   das Terminal-Frontend; direkte Engine-Aufrufer erhalten strukturierte
   Operationen, Zustaende und Ergebnisse und muessen keine Konsolenausgabe
   auswerten.
@@ -95,8 +114,9 @@ Aktueller Stand seit R4OS 0.63.13:
   zuerst ueber die gemeinsamen NTFS-Identitaeten. Danach muessen das
   gespeicherte alte Groessen-/Checksum-Paar am Ziel, ein fehlender Backupname
   und ein passender oder bereits entfernter neuer Stageinhalt bewiesen sein.
-- Kernel-Updates ersetzen `/boot/r4os.elf`, sichern den vorherigen Kernel als
-  `/boot/r4os-prev.elf` und nutzen den vorbereiteten Limine-Rollbackeintrag.
+- Kernel-Updates ersetzen `/boot/r4os.elf`. Der vorherige Inhalt bleibt unter
+  einem vom Journal gebundenen 8.3-Backupnamen neben dem Ziel erhalten.
+  Ein vorhandener manueller Limine-Rollbackeintrag ist davon getrennt.
 - Nach dem verifizierten Artefaktcommit liest die Engine Name, Art und Version
   erneut aus den tatsaechlich installierten R4M0- beziehungsweise
   Kernel-ELF-Metadaten. Sie aktualisiert `MODULES.JSON` als internen letzten

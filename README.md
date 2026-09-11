@@ -4,7 +4,7 @@
 
 ## Package
 
-- Version: `0.1.15`
+- Version: `0.1.16`
 - Image target: `/R4OS/SOFTWARE/TERMINAL/SYSUPD.R4X`
 - Image scope: `slim`
 - Canonical project manifest: `module.R4MF`
@@ -38,6 +38,14 @@ with the service engine.
 Detailed German technical notes from the migration are preserved in
 `DOCUMENTATION.de.txt`. Source-transfer provenance is recorded in
 `PROVENANCE.txt`.
+
+`SYSUPD ARCHIVE-BOOT-BACKUP Bxxxxxxx.R4U` moves one unreferenced boot backup
+into `C:\R4OS\UPDATE\ARCHIVE`. Under the update lease, both journal slots,
+boot configuration and sibling FAT identities must exclude the candidate.
+The original name is removed only after durable copying, full byte comparison
+and a second reference check. Foreign archive contents are retained and
+reported as a failure. This explicit maintenance command does not rewrite
+the journal, discard backup contents or repair a damaged filesystem.
 
 ## License
 

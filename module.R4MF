@@ -1,7 +1,7 @@
 R4OS_MODULE_MANIFEST=2
 KIND=R4X
 NAME=SYSUPD
-VERSION=0.1.15
+VERSION=0.1.16
 LANGUAGE=Zig
 SOURCE=src/main.zig
 ZIG_MODULE=system_update_engine:../../SDK/r4os/system_update_engine.zig
@@ -18,3 +18,4 @@ META=feature=bounded-stage-abort-retry
 META=feature=subsystem-r4x-update-targets
 META=feature=subsystem-r4x-recovery-targets
 META=feature=safe-precommit-batch-abort
+META=feature=verified-unreferenced-boot-backup-archive
