@@ -4,7 +4,7 @@
 
 ## Package
 
-- Version: `0.1.16`
+- Version: `0.1.17`
 - Image target: `/R4OS/SOFTWARE/TERMINAL/SYSUPD.R4X`
 - Image scope: `slim`
 - Canonical project manifest: `module.R4MF`
@@ -34,6 +34,14 @@ private stages before replacing active files. Terminal output includes the
 actual payload stream attempts and bytes read, including retries. Metadata
 reads use bounded blocks; recovery and source-binding checks remain shared
 with the service engine.
+
+Version 0.1.17 provisions missing parents of admitted C: payload targets when
+staging under the existing durable update intent. Verification checks parent
+types without creating directories. A file in the ancestor chain is a conflict;
+creation is checked by a fresh lookup and uses the existing bounded I/O retry.
+Abort/rollback retains shared directories while removing only identity-bound
+payload/stage files. The journal format and internal boot-volume path are
+unchanged. UPDSVC uses this same implementation.
 
 Detailed German technical notes from the migration are preserved in
 `DOCUMENTATION.de.txt`. Source-transfer provenance is recorded in
