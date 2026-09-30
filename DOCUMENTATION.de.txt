@@ -3,6 +3,13 @@
 
 SYSUPD.R4X ist der Systemdatei-Updater-Einstieg fuer R4OS.
 
+Seit Modul 0.1.20 liest STATUS bei einem I/O-Fehler hoechstens dreimal die
+gesamte Batch-/Journal-Sicht neu ein. Ein konkurrierender Austausch durch
+eine kuerzere Datei wird dadurch mit neuer Dateigroesse gelesen. Erst eine
+vollstaendige Lesesicht veroeffentlicht Batch- und Transaktionsmetadaten;
+ein dauerhafter Fehler liefert keine Teilmetadaten. Mutierende Befehle,
+Recovery und das Journalformat sind davon unveraendert.
+
 Seit Modul 0.1.16 kann SYSUPD ARCHIVE-BOOT-BACKUP Bxxxxxxx.R4U einen nicht
 mehr referenzierten Bootbackup nach C:\R4OS\UPDATE\ARCHIVE verschieben.
 Zulaessig ist nur ein Name aus B, sieben Hexziffern und .R4U. Beide vorhandenen
