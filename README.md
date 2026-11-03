@@ -77,3 +77,14 @@ missing backups and competing batches stop before publishing rollback intent.
 After a batch restore, RESUME-BATCH reconciles the batch state. If the kernel
 was restored too, boot again to run that restored kernel. Recovery remains
 the independent repair route when the installed kernel cannot start.
+
+Standalone GUI retirement (0.1.26)
+---------------------------------
+SYSUPD RETIRE-UPDATE-CENTER [/CHECK] archives the exact UPDATE0.2.8 GUI
+and atomically removes only its installed inventory entry. Requires Desktop
+>=0.1.201 and stopped UPDATE and UPDSVC. Uses the common update
+lease, refuses unfinished updates and preserves all backend/registry/journal
+state. Unknown files and conflicting migration stages/backups are retained.
+A retry finishes a GUI-archived/catalog-pending transition or reports already
+retired. Detailed operator workflow: Docs/Deployment/SystemUpdate.txt in the
+R4OS workspace. This command does not download or install online updates.
