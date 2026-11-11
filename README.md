@@ -4,7 +4,7 @@
 
 ## Package
 
-- Version: `0.1.18`
+- Version: `0.1.30`
 - Image target: `/R4OS/SOFTWARE/TERMINAL/SYSUPD.R4X`
 - Image scope: `slim`
 - Canonical project manifest: `module.R4MF`
@@ -88,3 +88,15 @@ state. Unknown files and conflicting migration stages/backups are retained.
 A retry finishes a GUI-archived/catalog-pending transition or reports already
 retired. Detailed operator workflow: Docs/Deployment/SystemUpdate.txt in the
 R4OS workspace. This command does not download or install online updates.
+
+App2 migration in 0.1.30
+-----------------------
+SYSUPD uses the normal generation2 entry, Query2 system/device bindings and
+the shared update engine's actual context-bound storage/transaction owners.
+Whole UTF8/quote grammar is validated before terminal dispatch. A quoted
+whole path and the established unquoted path remainder are accepted.
+Commands with no path reject extra arguments. RETIRE-UPDATE-CENTER uses
+the shared cursor and delegates other commands to the terminal engine.
+Native CLI, original workflows and artifact evidence belong to the workspace
+migration receipt for0.90.71. The separate client/server connection project
+owns online update-server integration.

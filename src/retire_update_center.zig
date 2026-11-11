@@ -16,18 +16,25 @@ var output: [inventory_api.max_bytes]u8 = undefined;
 var inventory: inventory_api.Inventory = undefined;
 var chunk: [65536]u8 = undefined;
 
-pub fn dispatch(app: *r4os.App) ?i32 {
+pub fn dispatch(app: *r4os.App2) ?i32 {
     const sys = app.system();
     const args = std.mem.trim(u8, std.mem.span(sys.argsRaw()), " \t\r\n");
-    var parts = std.mem.tokenizeAny(u8, args, " \t");
-    if (!std.ascii.eqlIgnoreCase(parts.next() orelse "", "RETIRE-UPDATE-CENTER")) {
+    var detail: r4os.arguments.Failure = .{};
+    var cursor = r4os.arguments.ArgCursor.init(args, .{}, &detail) catch return null;
+    const first = cursor.next() catch return null;
+    const command = if (first) |token| token.bytes(args) catch return null else "";
+    if (!std.ascii.eqlIgnoreCase(command, "RETIRE-UPDATE-CENTER")) {
         if (args.len == 0 or std.ascii.eqlIgnoreCase(args, "/?") or std.ascii.eqlIgnoreCase(args, "--help"))
             sys.println("SYSUPD RETIRE-UPDATE-CENTER [/CHECK] - archive the retired 0.2.8 GUI; close UPDATE and stop UPDSVC first.");
         return null;
     }
-    const option = parts.next();
+    var grammar = cursor;
+    while (grammar.next() catch return failure(&sys, "arguments")) |_| {}
+    const token = cursor.next() catch return failure(&sys, "arguments");
+    const option = if (token) |value| value.bytes(args) catch return failure(&sys, "arguments") else null;
     const check = if (option) |value| std.ascii.eqlIgnoreCase(value, "/CHECK") else false;
-    if ((option != null and !check) or parts.next() != null) return failure(&sys, "arguments");
+    const extra = cursor.next() catch return failure(&sys, "arguments");
+    if ((option != null and !check) or extra != null) return failure(&sys, "arguments");
     run(app, check) catch |err| return failure(&sys, @errorName(err));
     return 0;
 }
@@ -70,7 +77,7 @@ fn quiescent(engine: *engine_api.Engine) !void {
     }) return error.UpdatePending;
 }
 
-fn run(app: *r4os.App, check: bool) !void {
+fn run(app: *r4os.App2, check: bool) !void {
     const sys = app.system();
     // No stop, kill or autostart mutation is hidden in this command.
     for ([_][*:0]const u8{ gui, "C:\\R4OS\\SERVICES\\UPDSVC.R4X" }) |path| {

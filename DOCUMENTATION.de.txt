@@ -139,3 +139,16 @@ Aktueller Stand seit R4OS 0.63.13:
   fuer laufende Recoveryfaelle lesbar.
 - `VERSION.R4S` und `MODULES.JSON` sind keine erlaubten Paketpayloads; ein
   Teilpaket kann daher keinen vollstaendigen Release vortaeuschen.
+
+API-Migration0.90.71
+-------------------
+SYSUPD0.1.30 nutzt den normalen App2-Einstieg mit R4SYS/R4DEV Query2.
+Der gemeinsame SDK204-Engine bindet die echten System-/Dateifassaden fuer
+Status, Verifikation, Stage, Apply, Commit, Resume und Ruecknahme.
+ArgCursor validiert ganze UTF8-/Quoteeingaben vor dem Befehlsdispatch.
+Gequotete Einzelpfade und der etablierte ungequotete ganze Pfadrest sind
+zulaessig. Argumentlose Befehle pruefen das Ende. Der besondere Retirement-
+Befehl verwendet denselben Cursor und delegiert andere Kommandos an den
+Terminalbesitzer. Bestehende Journal-/Inventar-/Stage-/Publishorakel und
+native CLI-Gegenfaelle begleiten die Migration. Der neue Onlineanschluss
+an R4OS Server besitzt sein gesondertes Projekt und seine eigenen Belege.
