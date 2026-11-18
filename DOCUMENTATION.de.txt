@@ -147,8 +147,6 @@ Der gemeinsame SDK204-Engine bindet die echten System-/Dateifassaden fuer
 Status, Verifikation, Stage, Apply, Commit, Resume und Ruecknahme.
 ArgCursor validiert ganze UTF8-/Quoteeingaben vor dem Befehlsdispatch.
 Gequotete Einzelpfade und der etablierte ungequotete ganze Pfadrest sind
-zulaessig. Argumentlose Befehle pruefen das Ende. Der besondere Retirement-
-Befehl verwendet denselben Cursor und delegiert andere Kommandos an den
-Terminalbesitzer. Bestehende Journal-/Inventar-/Stage-/Publishorakel und
+zulaessig. Argumentlose Befehle pruefen das Ende. Bestehende Journal-/Inventar-/Stage-/Publishorakel und
 native CLI-Gegenfaelle begleiten die Migration. Der neue Onlineanschluss
 an R4OS Server besitzt sein gesondertes Projekt und seine eigenen Belege.
